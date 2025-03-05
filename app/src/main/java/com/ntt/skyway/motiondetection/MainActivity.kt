@@ -11,7 +11,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.ntt.skyway.core.SkyWayContext
 import com.ntt.skyway.core.util.Logger
-import com.ntt.skyway.motiondetection.autosubscribe.AutoSubscribeActivity
 import com.ntt.skyway.motiondetection.common.manager.SampleManager
 import com.ntt.skyway.motiondetection.databinding.ActivityMainBinding
 import com.ntt.skyway.motiondetection.p2proom.P2PRoomActivity
@@ -20,7 +19,7 @@ import kotlinx.coroutines.*
 
 
 class MainActivity : AppCompatActivity() {
-    private val authToken = "TOKEN"
+    private val authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmZGU4MDE4Ny04NTUyLTRjMTktOTU1Yi1jNTZlOWVhMjY3OTAiLCJpYXQiOjE3NDExNjAyMjguMDIxLCJleHAiOjE3NDEyNDY2MjguMDIxLCJzY29wZSI6eyJhcHAiOnsiaWQiOiJhYTAyOGNjMS1hYzZmLTQ3ODEtYTg1NS1lNjU4ZDg5YTExZjUiLCJ0dXJuIjp0cnVlLCJhY3Rpb25zIjpbInJlYWQiXSwiY2hhbm5lbHMiOlt7ImlkIjoiKiIsIm5hbWUiOiIqIiwiYWN0aW9ucyI6WyJyZWFkIiwid3JpdGUiXSwibWVtYmVycyI6W3siaWQiOiIqIiwibmFtZSI6IioiLCJhY3Rpb25zIjpbIndyaXRlIl0sInB1YmxpY2F0aW9uIjp7ImFjdGlvbnMiOlsid3JpdGUiXX0sInN1YnNjcmlwdGlvbiI6eyJhY3Rpb25zIjpbIndyaXRlIl19fV0sInNmdUJvdHMiOlt7ImFjdGlvbnMiOlsid3JpdGUiXSwiZm9yd2FyZGluZ3MiOlt7ImFjdGlvbnMiOlsid3JpdGUiXX1dfV19XX19fQ.0qAxL05a6Qy45sFSRIdeeCsfUI5-mO7vAVl0R-dkndQ"
 
     private lateinit var binding: ActivityMainBinding
 
@@ -100,12 +99,6 @@ class MainActivity : AppCompatActivity() {
                 scope.launch(Dispatchers.Main) {
                     SampleManager.type = SampleManager.Type.SFU_ROOM
                     startActivity(Intent(this@MainActivity, SFURoomActivity::class.java))
-                }
-            }
-            btnAutoSubscribe.setOnClickListener {
-                scope.launch(Dispatchers.Main) {
-                    SampleManager.type = SampleManager.Type.AUTO_SUBSCRIBE
-                    startActivity(Intent(this@MainActivity, AutoSubscribeActivity::class.java))
                 }
             }
         }

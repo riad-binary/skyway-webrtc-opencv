@@ -33,6 +33,7 @@ class P2PRoomActivity : AppCompatActivity() {
     private fun initUI() {
         binding.apply {
             supportActionBar?.title = SampleManager.type?.displayName
+            roomName.setText(UUID.randomUUID().toString())
 
             btnJoinChannel.setOnClickListener {
                 val memberInit: RoomMember.Init

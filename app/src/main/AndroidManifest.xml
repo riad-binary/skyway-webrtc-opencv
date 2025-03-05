@@ -29,12 +29,6 @@
             android:name=".p2proom.P2PRoomActivity"
             android:exported="false" />
         <activity
-            android:name=".autosubscribe.AutoSubscribeActivity"
-            android:exported="false" />
-        <activity
-            android:name=".autosubscribe.AutoSubscribeRoomDetailsActivity"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

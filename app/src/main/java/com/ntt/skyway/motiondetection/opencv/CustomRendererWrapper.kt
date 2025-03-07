@@ -22,11 +22,13 @@ class CustomRendererWrapper(
         customRenderer.onFrameHandler = { buffer ->
             val currentFrame = convertToMat(buffer)
 
+            // Detect motion and get bounding boxes
             val motionRects = detectMotionAndGetBoundingBoxes(previousFrame, currentFrame)
 
             // Pass the frame width and height to scale correctly
             motionOverlay.updateMotionRects(motionRects, buffer.width, buffer.height)
 
+            // Update previous frame for the next iteration
             previousFrame = currentFrame.clone()
         }
     }
@@ -34,15 +36,20 @@ class CustomRendererWrapper(
     private fun detectMotionAndGetBoundingBoxes(prevFrame: Mat?, currFrame: Mat): List<org.opencv.core.Rect> {
         if (prevFrame == null) return emptyList()
 
-        val diffFrame = Mat()
+        // Ensure both frames are the same size
+        if (prevFrame.size() != currFrame.size()) {
+            Imgproc.resize(currFrame, currFrame, prevFrame.size())
+        }
+
+        // Convert frames to grayscale
         val grayPrev = Mat()
         val grayCurr = Mat()
 
-        // Convert frames to grayscale
         Imgproc.cvtColor(prevFrame, grayPrev, Imgproc.COLOR_RGB2GRAY)
         Imgproc.cvtColor(currFrame, grayCurr, Imgproc.COLOR_RGB2GRAY)
 
         // Compute absolute difference
+        val diffFrame = Mat()
         Core.absdiff(grayPrev, grayCurr, diffFrame)
 
         // Apply threshold to detect motion
@@ -53,7 +60,7 @@ class CustomRendererWrapper(
         val hierarchy = Mat()
         Imgproc.findContours(diffFrame, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
 
-        // Convert contours to bounding boxes
+        // Convert contours to bounding boxes and filter by area
         return contours.map { Imgproc.boundingRect(it) }.filter { it.area() > 5000 }
     }
 
@@ -71,6 +78,6 @@ class CustomRendererWrapper(
 
         return matRgb
     }
-
 }
+
 

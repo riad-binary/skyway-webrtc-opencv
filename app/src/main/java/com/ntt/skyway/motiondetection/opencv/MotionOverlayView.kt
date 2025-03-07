@@ -24,8 +24,6 @@ class MotionOverlayView(context: Context, attrs: AttributeSet? = null) : View(co
         val viewHeight = this.height.toFloat()
 
         motionRects = rects.map { rect ->
-            Log.d("MotionOverlayView", "Original rect: x=${rect.x}, y=${rect.y}, width=${rect.width}, height=${rect.height}")
-
             // Original mapping (which you said appears "most accurate")
             val originalLeft = (rect.y.toFloat() / frameHeight) * viewWidth
             val top = (rect.x.toFloat() / frameWidth) * viewHeight
@@ -36,7 +34,6 @@ class MotionOverlayView(context: Context, attrs: AttributeSet? = null) : View(co
             val left = viewWidth - originalRight
             val right = viewWidth - originalLeft
 
-            Log.d("MotionOverlayView", "Mapped rect: left=$left, top=$top, right=$right, bottom=$bottom")
             android.graphics.Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
         }
         postInvalidate()  // Request redraw

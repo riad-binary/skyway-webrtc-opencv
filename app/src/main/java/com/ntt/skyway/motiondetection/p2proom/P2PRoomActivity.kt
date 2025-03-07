@@ -49,7 +49,7 @@ class P2PRoomActivity : AppCompatActivity() {
                         Toast.makeText(this@P2PRoomActivity,"Room findOrCreate failed", Toast.LENGTH_SHORT).show()
                         return@launch
                     }
-                    Log.d(tag, "findOrCreate Room id: " + RoomManager.room?.id)
+                    Log.i(tag, "[====================] P2PRoom.findOrCreate Room id: " + RoomManager.room?.id)
                     Toast.makeText(this@P2PRoomActivity,"Room findOrCreate OK", Toast.LENGTH_SHORT).show()
 
                     RoomManager.localPerson = RoomManager.room!!.join(memberInit)

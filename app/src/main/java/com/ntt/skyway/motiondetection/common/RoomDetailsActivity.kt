@@ -38,6 +38,7 @@ import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 
 
+@OptIn(SkyWayOptIn::class)
 class RoomDetailsActivity : AppCompatActivity() {
     private val tag = this.javaClass.simpleName
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -45,17 +46,12 @@ class RoomDetailsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRoomDetailsCommonBinding
 
     private var localVideoStream: LocalVideoStream? = null
-    private var localDataStream: LocalDataStream? = null
 
     private var recyclerViewAdapterRoomMember: RecyclerViewAdapterRoomMember? = null
     private var recyclerViewAdapterRoomPublication: RecyclerViewAdapterRoomPublication? = null
 
     private var publication: RoomPublication? = null
     private var subscription: RoomSubscription? = null
-
-    //only use by SFURoom sample
-    private var sfuToggleEncodingId = true
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,6 +113,8 @@ class RoomDetailsActivity : AppCompatActivity() {
         localVideoStream = CameraSource.createStream()
         localVideoStream?.addRenderer(binding.localRenderer)
 
+
+
         // CustomRenderer to capture frame
         val customRenderer = CustomRenderer()
         localVideoStream?.addRenderer(customRenderer)
@@ -125,7 +123,6 @@ class RoomDetailsActivity : AppCompatActivity() {
         val motionOverlay = MotionOverlayView(this)
         binding.localRenderer.addView(motionOverlay)  // Add overlay above the video
 
-        // Wrap `CustomRenderer` to process motion before rendering
         CustomRendererWrapper(customRenderer, motionOverlay)
     }
 
@@ -182,25 +179,6 @@ class RoomDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun publishAudioStream() {
-        Log.d(tag, "publishAudioStream()")
-        AudioSource.start()
-        val localAudioStream = AudioSource.createStream()
-        val options = RoomPublication.Options()
-        scope.launch(Dispatchers.Main) {
-            publication = RoomManager.localPerson?.publish(localAudioStream, options)
-        }
-    }
-
-    private fun publishDataStream() {
-        val localDataSource = DataSource()
-        localDataStream = localDataSource.createStream()
-        val options = RoomPublication.Options()
-        scope.launch(Dispatchers.Main) {
-            publication = RoomManager.localPerson?.publish(localDataStream!!, options)
-        }
-    }
-
 
     private var roomPublicationAdapterListener: RoomPublicationAdapterListener = object: RoomPublicationAdapterListener{
         override fun onUnPublishClick(publication: RoomPublication) {
@@ -209,26 +187,26 @@ class RoomDetailsActivity : AppCompatActivity() {
             }
         }
 
-        // used by p2proom & sfuroom sample
         override fun onSubscribeClick(publicationId: String) {
             scope.launch(Dispatchers.Main) {
+                Log.d(tag, "onSubscribeClick")
                 subscription = RoomManager.localPerson?.subscribe(publicationId)
                 when (subscription?.contentType) {
                     Stream.ContentType.VIDEO -> {
                         (subscription?.stream as RemoteVideoStream).addRenderer(binding.remoteRenderer)
+                        val customRenderer = CustomRenderer()
+                        (subscription?.stream as RemoteVideoStream).addRenderer(customRenderer)
+
+                        // Initialize motion overlay
+                        val motionOverlay = MotionOverlayView(binding.remoteRenderer.context)
+                        binding.remoteRenderer.addView(motionOverlay)  // Add overlay above the video
+
+                        CustomRendererWrapper(customRenderer, motionOverlay)
                     }
                     Stream.ContentType.AUDIO -> {
                         (subscription?.stream as RemoteAudioStream)
                     }
                     Stream.ContentType.DATA -> {
-                        (subscription?.stream as RemoteDataStream).onDataHandler = {
-                            Log.d(tag, "data received: $it")
-                        }
-
-                        (subscription?.stream as RemoteDataStream).onDataBufferHandler = {
-                            Log.d(tag, "data received byte: ${it.contentToString()}")
-                            Log.d(tag, "data received string: ${String(it)}")
-                        }
                     }
                     null -> {
 
@@ -244,16 +222,7 @@ class RoomDetailsActivity : AppCompatActivity() {
         }
 
         override fun onSFUChangeEncodingClick(subscription: RoomSubscription) {
-            scope.launch(Dispatchers.Main) {
-                if (sfuToggleEncodingId) {
-                    subscription?.changePreferredEncoding("high")
-                    Log.d(tag, "$tag changePreferredEncoding to high")
-                } else {
-                    subscription?.changePreferredEncoding("low")
-                    Log.d(tag, "$tag changePreferredEncoding to low")
-                }
-            }
-            sfuToggleEncodingId = !sfuToggleEncodingId
+
         }
 
     }

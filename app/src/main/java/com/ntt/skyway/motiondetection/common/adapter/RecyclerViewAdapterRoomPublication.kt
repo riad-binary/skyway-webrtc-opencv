@@ -59,6 +59,11 @@ class RecyclerViewAdapterRoomPublication(var listener: RoomPublicationAdapterLis
                 holder.buttonUnPublish.visibility = View.GONE
             }
         }
+        holder.buttonSubscribe.setOnClickListener {
+            listener.onSubscribeClick(item.id)
+            holder.buttonSubscribe.visibility = View.GONE
+            holder.buttonUnSubscribe.visibility = View.VISIBLE
+        }
         holder.buttonUnSubscribe.setOnClickListener {
             listener.onUnSubscribeClick()
             holder.buttonUnSubscribe.visibility = View.GONE
@@ -83,6 +88,7 @@ class RecyclerViewAdapterRoomPublication(var listener: RoomPublicationAdapterLis
         val textViewUserId: TextView = itemView.findViewById(R.id.tv_publication_id)
         val textViewPublisherName: TextView = itemView.findViewById(R.id.tv_publisher_name)
         val textViewPublicationType: TextView = itemView.findViewById(R.id.tv_publication_type)
+        val buttonSubscribe: Button = itemView.findViewById(R.id.btn_subscribe)
         val buttonUnSubscribe: Button = itemView.findViewById(R.id.btn_unsubscribe)
         val buttonUnPublish: Button = itemView.findViewById(R.id.btn_un_publish)
         val buttonSFUChangeEncoding: Button = itemView.findViewById(R.id.btn_change_encoding)

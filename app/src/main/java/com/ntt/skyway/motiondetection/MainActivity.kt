@@ -14,7 +14,6 @@ import com.ntt.skyway.core.util.Logger
 import com.ntt.skyway.motiondetection.common.manager.SampleManager
 import com.ntt.skyway.motiondetection.databinding.ActivityMainBinding
 import com.ntt.skyway.motiondetection.p2proom.P2PRoomActivity
-import com.ntt.skyway.motiondetection.sfuroom.SFURoomActivity
 import kotlinx.coroutines.*
 
 
@@ -93,12 +92,6 @@ class MainActivity : AppCompatActivity() {
                 scope.launch(Dispatchers.Main) {
                     SampleManager.type = SampleManager.Type.P2P_ROOM
                     startActivity(Intent(this@MainActivity, P2PRoomActivity::class.java))
-                }
-            }
-            btnSFURoom.setOnClickListener {
-                scope.launch(Dispatchers.Main) {
-                    SampleManager.type = SampleManager.Type.SFU_ROOM
-                    startActivity(Intent(this@MainActivity, SFURoomActivity::class.java))
                 }
             }
         }

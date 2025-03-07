@@ -22,6 +22,8 @@ import com.ntt.skyway.motiondetection.common.listener.RoomPublicationAdapterList
 import com.ntt.skyway.motiondetection.common.manager.RoomManager
 import com.ntt.skyway.motiondetection.common.manager.SampleManager
 import com.ntt.skyway.motiondetection.databinding.ActivityRoomDetailsCommonBinding
+import com.ntt.skyway.motiondetection.opencv.CustomRendererWrapper
+import com.ntt.skyway.motiondetection.opencv.MotionOverlayView
 import com.ntt.skyway.room.RoomPublication
 import com.ntt.skyway.room.RoomSubscription
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +33,8 @@ import org.opencv.android.OpenCVLoader
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.MatOfPoint
+import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 
 
@@ -104,7 +108,7 @@ class RoomDetailsActivity : AppCompatActivity() {
         binding.localRenderer.setup()
         binding.remoteRenderer.setup()
 
-        val device = CameraSource.getFrontCameras(applicationContext).first()
+        val device = CameraSource.getBackCameras(applicationContext).first()
         CameraSource.startCapturing(
             applicationContext,
             device,
@@ -113,14 +117,16 @@ class RoomDetailsActivity : AppCompatActivity() {
         localVideoStream = CameraSource.createStream()
         localVideoStream?.addRenderer(binding.localRenderer)
 
-        // Use CustomRenderer instead of CustomVideoSink
+        // CustomRenderer to capture frame
         val customRenderer = CustomRenderer()
         localVideoStream?.addRenderer(customRenderer)
 
-        // Handle frames in CustomRenderer
-        customRenderer.onFrameHandler = { buffer ->
-            processFrame(buffer)
-        }
+        // Initialize motion overlay
+        val motionOverlay = MotionOverlayView(this)
+        binding.localRenderer.addView(motionOverlay)  // Add overlay above the video
+
+        // Wrap `CustomRenderer` to process motion before rendering
+        CustomRendererWrapper(customRenderer, motionOverlay)
     }
 
     private fun initButtons() {
@@ -133,44 +139,6 @@ class RoomDetailsActivity : AppCompatActivity() {
 
         binding.btnPublish.setOnClickListener {
             publishCameraVideoStream()
-        }
-
-        binding.btnAudio.setOnClickListener {
-            publishAudioStream()
-        }
-
-        binding.btnPublishData.setOnClickListener {
-            publishDataStream()
-        }
-
-        binding.btnSendData.setOnClickListener {
-            val text = binding.textData.text.toString()
-            localDataStream?.write(text)
-        }
-
-        //only use by SFURoom sample
-        binding.btnChangeEncoding.setOnClickListener {
-            scope.launch(Dispatchers.Main) {
-                val sub = RoomManager.room?.subscriptions?.find { it.id == subscription?.id }
-
-                if (sfuToggleEncodingId) {
-                    sub?.changePreferredEncoding("high")
-                    Log.d(tag, "$tag changePreferredEncoding to high")
-                } else {
-                    sub?.changePreferredEncoding("low")
-                    Log.d(tag, "$tag changePreferredEncoding to low")
-                }
-                sfuToggleEncodingId = !sfuToggleEncodingId
-            }
-        }
-
-        if (RoomManager.type == "P2P") {
-            binding.btnChangeEncoding.visibility = View.GONE
-        }
-        if (RoomManager.type == "SFU") {
-            binding.textData.visibility = View.GONE
-            binding.btnSendData.visibility = View.GONE
-            binding.btnPublishData.visibility = View.GONE
         }
     }
 
@@ -293,63 +261,6 @@ class RoomDetailsActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         localVideoStream?.removeAllRenderer()
-    }
-
-
-    private var previousFrame: Mat? = null
-
-    @OptIn(SkyWayOptIn::class)
-    private fun processFrame(buffer: CustomRenderer.VideoFrameBuffer) {
-        val currentFrame = convertToMat(buffer)
-
-        if (previousFrame != null) {
-            val motionDetected = detectMotion(previousFrame!!, currentFrame)
-            if (motionDetected) {
-                Log.d(tag, "$tag motionDetected")
-            }
-        }
-
-        // Update previous frame
-        previousFrame = currentFrame.clone()
-
-    }
-
-
-
-    @OptIn(SkyWayOptIn::class)
-    fun convertToMat(buffer: CustomRenderer.VideoFrameBuffer): Mat {
-        val yPlane = ByteArray(buffer.dataY.remaining())
-        buffer.dataY.get(yPlane)
-
-        val mat = Mat(buffer.height, buffer.width, CvType.CV_8UC1)
-        mat.put(0, 0, yPlane)
-
-        // Convert grayscale Y-plane to RGB (for motion detection)
-        val matRgb = Mat()
-        Imgproc.cvtColor(mat, matRgb, Imgproc.COLOR_GRAY2RGB)
-
-        return matRgb
-    }
-
-
-    private fun detectMotion(prevFrame: Mat, currFrame: Mat): Boolean {
-        val diffFrame = Mat()
-        val grayPrev = Mat()
-        val grayCurr = Mat()
-
-        // Convert to grayscale (reduces noise and complexity)
-        Imgproc.cvtColor(prevFrame, grayPrev, Imgproc.COLOR_RGB2GRAY)
-        Imgproc.cvtColor(currFrame, grayCurr, Imgproc.COLOR_RGB2GRAY)
-
-        // Compute the absolute difference between frames
-        Core.absdiff(grayPrev, grayCurr, diffFrame)
-
-        // Apply a binary threshold to highlight differences
-        Imgproc.threshold(diffFrame, diffFrame, 25.0, 255.0, Imgproc.THRESH_BINARY)
-
-        // Count non-zero pixels (motion detected if above threshold)
-        val nonZeroPixels = Core.countNonZero(diffFrame)
-        return nonZeroPixels > 5000 // Adjust this threshold based on sensitivity
     }
 
 
